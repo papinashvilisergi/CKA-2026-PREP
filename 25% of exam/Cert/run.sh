@@ -1,7 +1,22 @@
 #!/bin/bash
 set -e
-echo "Setup: assumes cert-manager CRDs are already installed on this cluster."
-cat <<'TASK'
+
+# Actually install the cert-manager CRDs the task depends on,
+# so "list all cert-manager CRDs" has something real to find.
+echo "Installing cert-manager CRDs ..."
+if kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.crds.yaml; then
+  echo "CRDs installed."
+else
+  echo "WARNING: install failed (no internet?). The task needs cert-manager CRDs present."
+fi
+
+sleep 5
+echo "Current cert-manager CRDs:"
+kubectl get crd | grep cert-manager || echo "(none found)"
+
+rm -f /root/resources.yaml /root/documentation.txt
+
+cat <<"TASK"
 ==================================================================
 TASK: Cert — cert-manager CRDs
 ==================================================================

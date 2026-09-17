@@ -1,7 +1,27 @@
 #!/bin/bash
 set -e
-echo "Setup: assumes ~/cri-dockerd.deb is present on this host (per task premise)."
-cat <<'TASK'
+
+# Clean any previous state so the task starts fresh
+sudo systemctl stop cri-docker.service 2>/dev/null || true
+sudo systemctl disable cri-docker.service 2>/dev/null || true
+sudo rm -f /etc/sysctl.d/*cri* /etc/sysctl.d/kube.conf 2>/dev/null || true
+rm -f ~/cri-dockerd.deb
+
+# Provide the .deb the task expects, so it genuinely exists on disk
+ARCH=$(dpkg --print-architecture)
+VERSION="0.3.15"
+URL="https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd_${VERSION}.3-0.ubuntu-jammy_${ARCH}.deb"
+
+echo "Downloading cri-dockerd package to ~/cri-dockerd.deb ..."
+if curl -fsSL -o ~/cri-dockerd.deb "$URL"; then
+  echo "Downloaded: $(ls -la ~/cri-dockerd.deb)"
+else
+  echo "WARNING: download failed (no internet?). Creating a placeholder so the path exists."
+  echo "You will need to supply a real cri-dockerd .deb to complete Step 1."
+  touch ~/cri-dockerd.deb
+fi
+
+cat <<"TASK"
 ==================================================================
 TASK: CRI — cri-dockerd setup
 ==================================================================

@@ -1,7 +1,21 @@
 #!/bin/bash
 set -e
-echo "Setup: assumes cert-manager CRDs are already installed (per task premise)."
-cat <<'TASK'
+
+# Clean any previous attempt
+helm repo remove argo 2>/dev/null || true
+rm -f /home/cloud_user/argo-helm.yaml
+mkdir -p /home/cloud_user
+
+# The task premise is that CRDs are already pre-installed — make that true,
+# so "install without CRDs" is a meaningful instruction rather than a guess.
+echo "Pre-installing Argo CD CRDs (per task premise) ..."
+if kubectl apply -k "https://github.com/argoproj/argo-cd/manifests/crds?ref=v2.13.0" 2>/dev/null; then
+  echo "Argo CD CRDs installed."
+else
+  echo "WARNING: CRD pre-install failed (no internet?). The task premise assumes they exist."
+fi
+
+cat <<"TASK"
 ==================================================================
 TASK: Argo — ArgoCD Helm Template
 ==================================================================
