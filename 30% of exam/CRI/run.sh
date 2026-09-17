@@ -9,7 +9,7 @@ rm -f ~/cri-dockerd.deb
 
 # Provide the .deb the task expects, so it genuinely exists on disk
 ARCH=$(dpkg --print-architecture)
-VERSION="0.3.15"
+VERSION="0.3.16"
 URL="https://github.com/Mirantis/cri-dockerd/releases/download/v${VERSION}/cri-dockerd_${VERSION}.3-0.ubuntu-jammy_${ARCH}.deb"
 
 echo "Downloading cri-dockerd package to ~/cri-dockerd.deb ..."
@@ -20,6 +20,11 @@ else
   echo "You will need to supply a real cri-dockerd .deb to complete Step 1."
   touch ~/cri-dockerd.deb
 fi
+
+# Fix service endpoint for compatibility
+sudo sed -i 's#--container-runtime-endpoint fd://#--container-runtime-endpoint unix:///var/run/cri-dockerd.sock#' /usr/lib/systemd/system/cri-docker.service
+#sudo systemctl reset-failed cri-docker.service cri-docker.socket if needed
+# Step 2: Enable and start the service
 
 cat <<"TASK"
 ==================================================================
