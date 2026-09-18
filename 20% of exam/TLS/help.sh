@@ -47,4 +47,19 @@ Do not forget the namespace flag. The ConfigMap and Deployment are in secure-spa
 Keep the same ConfigMap name: tls-config. If you change the name, the Deployment will not find it.
 Do not use only kubectl edit; the task explicitly requires delete and recreate.
 ==================================================================
+
+IMPORTANT — a real, documented kubelet limitation you may hit here:
+If the running pod still shows the OLD ssl_protocols line even after
+delete + recreate + rollout restart, this is a known Kubernetes
+behavior, not a mistake in your steps. Once a ConfigMap is marked
+immutable, kubelet stops watching it for changes entirely — and
+deleting/recreating one with the SAME NAME does not reliably clear
+that cache. Kubernetes' own docs confirm the fix is either:
+  a) restart kubelet on the affected node:
+       sudo systemctl restart kubelet
+       kubectl delete pod -n secure-space -l app=secure-web
+  b) or give the new ConfigMap a different name and repoint the
+     Deployment's volume at it instead of reusing the old name
+Source: https://kubernetes.io/docs/concepts/configuration/configmap/
+==================================================================
 HELPEOF
