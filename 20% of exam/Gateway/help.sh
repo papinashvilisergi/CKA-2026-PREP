@@ -3,6 +3,14 @@ cat <<'HELPEOF'
 ==================================================================
 SOLUTION
 ==================================================================
+# 0. Prerequisite — Gateway API kinds (Gateway, HTTPRoute) are NOT
+#    built into Kubernetes. If you see "no matches for kind
+#    Gateway/HTTPRoute... ensure CRDs are installed first", this is
+#    why — install the CRDs before anything else:
+
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+kubectl get crd | grep gateway.networking.k8s.io   # confirm they exist
+
 # 1. Create the manifest file:
 
 nano gateway-api.yaml

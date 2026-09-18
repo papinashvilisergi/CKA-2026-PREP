@@ -2,6 +2,16 @@
 set -e
 kubectl create namespace web-app --dry-run=client -o yaml | kubectl apply -f -
 
+# Gateway API CRDs are NOT built into Kubernetes — Gateway/HTTPRoute
+# kinds don't exist until these are installed, same as cert-manager's CRDs.
+echo "Installing Gateway API CRDs..."
+if kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml; then
+  echo "Gateway API CRDs installed."
+  sleep 5
+else
+  echo "WARNING: CRD install failed (no internet?). Gateway/HTTPRoute apply will fail without them."
+fi
+
 cat <<'EOF' | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
