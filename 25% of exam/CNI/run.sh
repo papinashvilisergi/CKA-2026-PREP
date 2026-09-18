@@ -6,6 +6,21 @@ set -e
 sudo kubectl delete daemonset cilium -n kube-system --ignore-not-found=true 2>/dev/null || true
 sudo kubectl delete daemonset cilium-envoy -n kube-system --ignore-not-found=true 2>/dev/null || true
 sudo kubectl delete deployment cilium-operator -n kube-system --ignore-not-found=true 2>/dev/null || true
+
+# Wait for Cilium pods to ACTUALLY terminate before touching CNI conf files —
+# `kubectl delete` returns immediately, but the agent stays alive for a bit
+# and can re-write its own CNI conf file if we clean up too early (race condition).
+echo "Waiting for Cilium pods to fully terminate..."
+for i in $(seq 1 30); do
+  REMAINING=$(kubectl get pods -n kube-system -l k8s-app=cilium --no-headers 2>/dev/null | wc -l)
+  [ "$REMAINING" -eq 0 ] && break
+  sleep 2
+done
+
+sudo rm -f /etc/cni/net.d/*.conflist /etc/cni/net.d/*.conf 2>/dev/null || true
+sleep 2
+# Do it again, in case anything raced past the wait above
+sudo rm -f /etc/cni/net.d/*.conflist /etc/cni/net.d/*.conf 2>/dev/null || true
 sudo kubectl delete daemonset kube-flannel-ds -n kube-flannel --ignore-not-found=true 2>/dev/null || true
 sudo kubectl delete namespace kube-flannel --ignore-not-found=true 2>/dev/null || true
 sudo kubectl delete daemonset -n calico-system --all --ignore-not-found=true 2>/dev/null || true
